@@ -99,22 +99,33 @@ def build_experimental_model(arch_type, input_shape=(256, 256, 3), num_classes=6
         x = layers.Activation('relu')(x)
         x = layers.MaxPooling2D((2, 2))(x)
         
-    elif arch_type == 'mobilenet_v2':
+    elif arch_type == 'mobilenet_v2' or arch_type == 'mobilenet_v2_finetuned':
         # Load the pre-trained expert brain
         base_model = MobileNetV2(
             input_shape=input_shape,
             include_top=False,
             weights='imagenet'
         )
-        # Freeze the weights so Google's training is not overwritten
-        base_model.trainable = False 
-        
-        # Pass augmented images through the frozen brain
-        # training=False is critical to keep BatchNorm layers frozen!
-        x = base_model(x, training=False) 
+        # 2. Adjust trainability based on the specific architecture
+        if arch_type == 'mobilenet_v2':
+            # Feature extraction mode: Freeze completely
+            base_model.trainable = False 
+            # Pass through with training=False to keep BatchNorm layers frozen
+            x = base_model(x, training=False) 
+            
+        elif arch_type == 'mobilenet_v2_finetuned':
+            # Fine-tuning mode: The base model must be set to trainable 
+            # so Keras expects its weight states to be updated/loaded.
+            base_model.trainable = True
+            
+            # IMPORTANT: Look at your original training script for fine-tuning.
+            # If you passed training=False to the base model during fine-tuning 
+            # to lock BatchNormalization behavior, match it here:
+            x = base_model(x, training=False) 
 
     # 3. Shared Custom Decision Head (Automatically attaches to whichever model you picked above!)
     x = layers.GlobalAveragePooling2D()(x)
+    # x = layers.Flatten()(x)
     x = layers.Dense(256, activation='relu')(x)
     x = layers.BatchNormalization()(x)
     x = layers.Dropout(0.4)(x)
