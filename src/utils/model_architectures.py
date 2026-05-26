@@ -100,6 +100,7 @@ def build_experimental_model(arch_type, input_shape=(256, 256, 3), num_classes=6
         x = layers.MaxPooling2D((2, 2))(x)
         
     elif arch_type == 'mobilenet_v2' or arch_type == 'mobilenet_v2_finetuned':
+        x = layers.Rescaling(scale=2.0, offset=-1.0)(x)
         # Load the pre-trained expert brain
         base_model = MobileNetV2(
             input_shape=input_shape,
