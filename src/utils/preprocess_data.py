@@ -36,29 +36,20 @@ def get_garbage_datasets(data_dir, batch_size=64, seed=42, img_size=(256, 256), 
     ])
 
     # 3. Cache in RAM and Shuffle (Crucial for preventing sequence memorization)
-    train_ds = train_ds.cache()
+    # train_ds = train_ds.cache()
     train_ds = train_ds.shuffle(buffer_size=1000) # Added shuffle here!
-    val_ds = val_ds.cache() # Never shuffle validation data
+    # val_ds = val_ds.cache() # Never shuffle validation data
 
     # 4. Apply the correct preprocessing map (ONLY MATH, NO AUGMENTATION)
-    if model_type == 'mobilenet':
-        train_ds = train_ds.map(
-            lambda x, y: (preprocess_input(x), y), # Removed augmentation
-            num_parallel_calls=tf.data.AUTOTUNE
-        )
-        val_ds = val_ds.map(
-            lambda x, y: (preprocess_input(x), y),
-            num_parallel_calls=tf.data.AUTOTUNE
-        )
-    else:
-        train_ds = train_ds.map(
-            lambda x, y: (x / 255.0, y), # Removed augmentation
-            num_parallel_calls=tf.data.AUTOTUNE
-        )
-        val_ds = val_ds.map(
-            lambda x, y: (x / 255.0, y),
-            num_parallel_calls=tf.data.AUTOTUNE
-        )
+    
+    train_ds = train_ds.map(
+        lambda x, y: (x / 255.0, y), # Removed augmentation
+        num_parallel_calls=tf.data.AUTOTUNE
+    )
+    val_ds = val_ds.map(
+        lambda x, y: (x / 255.0, y),
+        num_parallel_calls=tf.data.AUTOTUNE
+    )
 
     # 5. Prefetch for GPU/Neural Engine speed (Always the very last step)
     train_ds = train_ds.prefetch(buffer_size=tf.data.AUTOTUNE)
